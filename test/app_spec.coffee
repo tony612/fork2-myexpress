@@ -11,6 +11,11 @@ describe "app", ->
       request(server).get('/foo').expect(404).end(done)
 
   describe "#listen", ->
-    app.listen(7000)
+    before (done)->
+      @server = app.listen(7000, done)
+
+    it "returns an http.Server", ->
+      expect(@server).to.be.instanceof(http.Server)
+
     it "listens to a port", (done)->
       request("http://localhost:7000").get("/foo").expect(404).end(done)

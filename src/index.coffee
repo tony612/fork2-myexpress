@@ -5,7 +5,7 @@ module.exports = ->
     response.statusCode = 404
     response.end()
 
-  handler.listen = (port)->
-    http.createServer(handler).listen(port)
+  handler.listen = (port, callback)->
+    http.createServer(handler).listen(port, callback)
 
   handler
