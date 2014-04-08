@@ -2,7 +2,7 @@
   "name": "myexpress",
   "version": "0.0.0",
   "description": "My express",
-  "main": "index.js",
+  "main": "./lib/index.js",
   "scripts": {
     "test": "mocha"
   },
