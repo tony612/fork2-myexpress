@@ -1,0 +1,3 @@
+--require test/helper
+--reporter spec
+--compilers coffee:coffee-script/register
