@@ -1,0 +1,14 @@
+{
+  "name": "myexpress",
+  "version": "0.0.0",
+  "description": "My express",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "Tony Han",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^1.9.1"
+  }
+}
