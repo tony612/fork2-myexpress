@@ -60,7 +60,7 @@ describe "app", ->
 
       request(@server).get('/foo').expect(404).end(done)
 
-    it "returns if no middleware is added", (done)->
+    it "returns 404 if no middleware is added", (done)->
       @app.stack = []
 
       request(@server).get('/foo').expect(404).end(done)
