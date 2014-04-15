@@ -20,17 +20,17 @@ module.exports = ->
 
     index = -1
 
-    findNearNormalStack = (index)->
+    findNearNormalLayer = (index)->
       for s in handler.stack[index..-1]
         return s if s.length < 4
 
-    findNearErrorStack = (index)->
+    findNearErrorLayer = (index)->
       for s in handler.stack[index..-1]
         return s if s.length == 4
 
     errorNext = (err)->
-      if nextStack = findNearErrorStack(index)
-        nextStack(err, request, response, next)
+      if nextLayer = findNearErrorLayer(index)
+        nextLayer(err, request, response, next)
       else
         if parent = handler.parent
           findParentNext()(err, request, response)
@@ -38,9 +38,9 @@ module.exports = ->
           responseWith(500)
 
     normalNext = ()->
-      if nextStack = findNearNormalStack(index)
+      if nextLayer = findNearNormalLayer(index)
         try
-          nextStack(request, response, next)
+          nextLayer(request, response, next)
         catch e
           responseWith(500)
       else
