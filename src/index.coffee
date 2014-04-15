@@ -3,15 +3,19 @@ module.exports = ->
   domain = require('domain')
 
   handler = (request, response, next)->
+    findParentNext = ->
+      pIndex = parent.stack.indexOf(handler)
+      pNext = parent.stack[pIndex + 1]
+
+    responseWith = (code)->
+      response.statusCode = code
+      response.end()
+
     if handler.stack.length == 0
-      parent = handler.parent
-      if parent
-        pIndex = parent.stack.indexOf(handler)
-        pNext = parent.stack[pIndex + 1]
-        pNext(request, response)
+      if parent = handler.parent
+        findParentNext()(request, response)
       else
-        response.statusCode = 404
-        response.end()
+        responseWith(404)
         return
 
     index = -1
@@ -24,19 +28,12 @@ module.exports = ->
       for s in handler.stack[index..-1]
         return s if s.length == 4
 
-    responseWith = (code)->
-      response.statusCode = code
-      response.end()
-
     errorNext = (err)->
       if nextStack = findNearErrorStack(index)
         nextStack(err, request, response, next)
       else
-        parent = handler.parent
-        if parent
-          pIndex = parent.stack.indexOf(handler)
-          pNext = parent.stack[pIndex + 1]
-          pNext(err, request, response)
+        if parent = handler.parent
+          findParentNext()(err, request, response)
         else
           responseWith(500)
 
@@ -55,7 +52,6 @@ module.exports = ->
         errorNext(err)
       else
         normalNext()
-
 
     next()
 
