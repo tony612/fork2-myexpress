@@ -116,3 +116,33 @@ describe "app", ->
       @app.use e1
 
       request(@server).get('/foo').expect(200).end(done)
+
+  describe "implement app embedding as middleware", ->
+    it "should pass unhandled request to parent", (done)->
+      m2 = (req, res, next) ->
+        res.end "m2"
+        return
+      app = new express()
+      subApp = new express()
+      app.use subApp
+      app.use m2
+
+      server = http.createServer(app)
+
+      request(server).get('/foo').expect(200, "m2").end(done)
+    it "should pass unhandled error to parent", (done)->
+      m1 = (req, res, next) ->
+        next "m1 error"
+        return
+      e1 = (err, req, res, next) ->
+        res.end err
+        return
+      app = new express()
+      subApp = new express()
+      subApp.use m1
+      app.use subApp
+      app.use e1
+
+      server = http.createServer(app)
+
+      request(server).get('/foo').expect(200, "m1 error").end(done)
