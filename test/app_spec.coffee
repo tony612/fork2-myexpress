@@ -138,7 +138,6 @@ describe "app", ->
     it "should pass unhandled request to parent", (done)->
       m2 = (req, res, next) ->
         res.end "m2"
-        return
       app = new express()
       subApp = new express()
       app.use subApp
@@ -147,6 +146,18 @@ describe "app", ->
       server = http.createServer(app)
 
       request(server).get('/').expect(200, "m2").end(done)
+
+    it "should return 404 when there's no layer next", (done)->
+      m2 = (req, res, next) ->
+        res.end "m2"
+        return
+      app = new express()
+      subApp = new express()
+      app.use subApp
+
+      server = http.createServer(app)
+
+      request(server).get('/').expect(404).end(done)
 
     it "should pass unhandled error to parent", (done)->
       m1 = (req, res, next) ->

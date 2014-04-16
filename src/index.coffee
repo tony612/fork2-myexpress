@@ -21,26 +21,32 @@ module.exports = ->
       for l in handler.stack[index..-1]
         return l if l.handle.length == 4 and l.match(request.url)
 
-    errorNext = (err)->
-      if nextLayer = findNearErrorLayer(index)
-        nextLayer.handle(err, request, response, next)
+    normalEnd = ->
+      if (parent = handler.parent) && (pNext = findParentNext(parent))
+        pNext.handle(request, response)
       else
-        if (parent = handler.parent) && (pNext = findParentNext(parent))
-          pNext.handle(err, request, response)
-        else
-          responseWith(500)
+        responseWith(404)
 
-    normalNext = ()->
+    errorEnd = (err)->
+      if (parent = handler.parent) && (pNext = findParentNext(parent))
+        pNext.handle(err, request, response)
+      else
+        responseWith(500)
+
+    normalNext = ->
       if nextLayer = findNearNormalLayer(index)
         try
           nextLayer.handle(request, response, next)
         catch e
           errorNext(e)
       else
-        if (parent = handler.parent) && (pNext = findParentNext(parent))
-          pNext.handle(request, response)
-        else
-          responseWith(404)
+        normalEnd()
+
+    errorNext = (err)->
+      if nextLayer = findNearErrorLayer(index)
+        nextLayer.handle(err, request, response, next)
+      else
+        errorEnd(err)
 
     next = (err)->
       index += 1
