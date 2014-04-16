@@ -4,8 +4,8 @@ module.exports = ->
   Layer = require('./layer')
 
   handler = (request, response, next)->
-    findParentNext = ->
-      pIndex = parent.stack.indexOf(handler)
+    findParentNext = (parent)->
+      pIndex = parent.stack.indexOf(handler.wrap)
       pNext = parent.stack[pIndex + 1]
 
     responseWith = (code)->
@@ -14,7 +14,7 @@ module.exports = ->
 
     if handler.stack.length == 0
       if parent = handler.parent
-        findParentNext()(request, response)
+        findParentNext(parent).handle(request, response)
       else
         responseWith(404)
         return
@@ -23,25 +23,25 @@ module.exports = ->
 
     findNearNormalLayer = (index)->
       for s in handler.stack[index..-1]
-        return s if s.length < 4
+        return s if s.handle.length < 4
 
     findNearErrorLayer = (index)->
       for s in handler.stack[index..-1]
-        return s if s.length == 4
+        return s if s.handle.length == 4
 
     errorNext = (err)->
       if nextLayer = findNearErrorLayer(index)
-        nextLayer(err, request, response, next)
+        nextLayer.handle(err, request, response, next)
       else
         if parent = handler.parent
-          findParentNext()(err, request, response)
+          findParentNext(parent).handle(err, request, response)
         else
           responseWith(500)
 
     normalNext = ()->
       if nextLayer = findNearNormalLayer(index)
         try
-          nextLayer(request, response, next)
+          nextLayer.handle(request, response, next)
         catch e
           responseWith(500)
       else
@@ -66,6 +66,7 @@ module.exports = ->
     layer = new Layer(path, middleware)
     if middleware.stack
       middleware.parent = handler
+      middleware.wrap = layer
     handler.stack.push layer
 
   handler

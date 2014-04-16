@@ -4,5 +4,4 @@ class Layer
   match: (path)->
     {path: @path} if path.indexOf(@path) >= 0
 
-
 module.exports = Layer
