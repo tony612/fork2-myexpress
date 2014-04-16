@@ -1,6 +1,5 @@
 module.exports = ->
   http = require('http')
-  domain = require('domain')
   Layer = require('./layer')
 
   handler = (request, response, next)->
