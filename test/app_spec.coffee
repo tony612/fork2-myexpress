@@ -147,6 +147,7 @@ describe "app", ->
       server = http.createServer(app)
 
       request(server).get('/').expect(200, "m2").end(done)
+
     it "should pass unhandled error to parent", (done)->
       m1 = (req, res, next) ->
         next "m1 error"

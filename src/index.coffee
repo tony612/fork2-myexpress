@@ -2,7 +2,7 @@ module.exports = ->
   http = require('http')
   Layer = require('./layer')
 
-  handler = (request, response, next)->
+  handler = (request, response)->
     findParentNext = (parent)->
       pIndex = parent.stack.indexOf(handler.wrap)
       pNext = parent.stack[pIndex + 1]
@@ -10,13 +10,6 @@ module.exports = ->
     responseWith = (code)->
       response.statusCode = code
       response.end()
-
-    if handler.stack.length == 0
-      if parent = handler.parent
-        findParentNext(parent).handle(request, response)
-      else
-        responseWith(404)
-        return
 
     index = -1
 
@@ -32,8 +25,8 @@ module.exports = ->
       if nextLayer = findNearErrorLayer(index)
         nextLayer.handle(err, request, response, next)
       else
-        if parent = handler.parent
-          findParentNext(parent).handle(err, request, response)
+        if (parent = handler.parent) && (pNext = findParentNext(parent))
+          pNext.handle(err, request, response)
         else
           responseWith(500)
 
@@ -44,7 +37,10 @@ module.exports = ->
         catch e
           errorNext(e)
       else
-        responseWith(404)
+        if (parent = handler.parent) && (pNext = findParentNext(parent))
+          pNext.handle(request, response)
+        else
+          responseWith(404)
 
     next = (err)->
       index += 1
