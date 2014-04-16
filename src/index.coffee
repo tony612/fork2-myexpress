@@ -21,12 +21,12 @@ module.exports = ->
     index = -1
 
     findNearNormalLayer = (index)->
-      for s in handler.stack[index..-1]
-        return s if s.handle.length < 4 and s.match(request.url)
+      for l in handler.stack[index..-1]
+        return l if l.handle.length < 4 and l.match(request.url)
 
     findNearErrorLayer = (index)->
-      for s in handler.stack[index..-1]
-        return s if s.handle.length == 4 and s.match(request.url)
+      for l in handler.stack[index..-1]
+        return l if l.handle.length == 4 and l.match(request.url)
 
     errorNext = (err)->
       if nextLayer = findNearErrorLayer(index)
