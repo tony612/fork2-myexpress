@@ -1,6 +1,7 @@
 module.exports = ->
   http = require('http')
   domain = require('domain')
+  Layer = require('./layer')
 
   handler = (request, response, next)->
     findParentNext = ->
@@ -60,9 +61,11 @@ module.exports = ->
 
   handler.stack = []
 
-  handler.use = (middleware)->
+  handler.use = (path, middleware)->
+    [path, middleware] = ['/', path] if !middleware
+    layer = new Layer(path, middleware)
     if middleware.stack
       middleware.parent = handler
-    handler.stack.push middleware
+    handler.stack.push layer
 
   handler

@@ -20,14 +20,31 @@ describe "app", ->
     it "listens to a port", (done)->
       request("http://localhost:7000").get("/foo").expect(404).end(done)
 
-  describe "#use", ->
-    it "adds middleware to stack", ->
-      m1 = ->
-      m2 = ->
-      app.use(m1);
-      app.use(m2);
-      expect(app.stack[0]).to.equal(m1)
-      expect(app.stack[1]).to.equal(m2)
+
+  describe '#use', ->
+    beforeEach ->
+      @app = new express()
+      @middleware = ->
+
+    it "creates a root path layer", ->
+      @app.use @middleware
+      layer = @app.stack[0]
+      expect(layer.handle).to.equal(@middleware)
+      expect(layer.path).to.eql('/')
+
+    it "creates a specified path layer", ->
+      @app.use '/foo', @middleware
+      layer = @app.stack[0]
+      expect(layer.handle).to.equal(@middleware)
+      expect(layer.path).to.eql('/foo')
+
+  #   it "adds middleware to stack", ->
+  #     m1 = ->
+  #     m2 = ->
+  #     app.use(m1);
+  #     app.use(m2);
+  #     expect(app.stack[0]).to.equal(m1)
+  #     expect(app.stack[1]).to.equal(m2)
 
   describe "calling middleware stack", ->
     beforeEach ->

@@ -3,7 +3,7 @@ request = require("supertest")
 http = require("http")
 Layer = require("../src/layer")
 
-describe "app", ->
+describe "layer", ->
   beforeEach ->
     @middleware = ->
     @layer = new Layer("/foo", @middleware)
@@ -11,7 +11,7 @@ describe "app", ->
   describe '#constructor', ->
     it "sets layer.handle to be the middleware", ->
       expect(@layer.handle).to.equal(@middleware)
-      expect(@layer.path).to.equal('/foo')
+      expect(@layer.path).to.eql('/foo')
 
   describe '#match', ->
     it "returns undefined if path doesn't match", ->
