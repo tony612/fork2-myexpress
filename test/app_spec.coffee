@@ -30,7 +30,7 @@ describe "app", ->
       @app.use @middleware
       layer = @app.stack[0]
       expect(layer.handle).to.equal(@middleware)
-      expect(layer.path).to.eql('/')
+      expect(layer.path).to.eql('')
 
     it "creates a specified path layer", ->
       @app.use '/foo', @middleware
