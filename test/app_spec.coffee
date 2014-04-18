@@ -236,3 +236,33 @@ describe "app", ->
 
       server = http.createServer(app)
       request(server).get('/foo').expect("undefined").end(done)
+
+  describe "subapp prefix path tramming", ->
+    beforeEach ->
+      @app = new express()
+      @subApp = new express()
+
+      @subApp.use "/bar", (req, res)->
+        res.end('sub: ' + req.url)
+
+      @app.use "/foo", @subApp
+      @app.use '/foo', (req, res)->
+        res.end('app: ' + req.url)
+
+    it "handle is a function", ->
+      expect(@app.handle).to.be.a('function')
+
+    it "trims request path prefix when calling embedded app", (done)->
+      request(@app).get('/foo/bar').expect('sub: /bar').end(done)
+
+    it "restore trimmed request path to original when going to the next middleware
+  ensures leading slash", (done)->
+      request(@app).get('/foo').expect('app: /foo').end(done)
+
+    it "ensures that first char is / for trimmed path", (done)->
+      barapp = express()
+      barapp.use "/", (req,res)->
+        res.end("/bar")
+      app.use("/bar",barapp)
+
+      request(app).get("/bar/").expect("/bar").end(done);

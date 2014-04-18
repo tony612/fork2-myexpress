@@ -11,6 +11,10 @@ module.exports = ->
     obj3
 
   app = (request, response)->
+    originUrl = request.url
+
+    request.url = originUrl.replace app.parentUrl, '' if app.parentUrl
+
     findParentNext = (parent)->
       pIndex = parent.stack.indexOf(app.wrap)
       pNext = parent.stack[pIndex + 1]
@@ -20,6 +24,9 @@ module.exports = ->
       response.end()
 
     index = -1
+
+    setReqUrlBack = ->
+      request.url = originUrl
 
     findNearNormalLayer = (index)->
       for l in app.stack[index..-1]
@@ -35,12 +42,14 @@ module.exports = ->
 
     normalEnd = ->
       if (parent = app.parent) && (pNext = findParentNext(parent))
+        setReqUrlBack()
         pNext.handle(request, response)
       else
         responseWith(404)
 
     errorEnd = (err)->
       if (parent = app.parent) && (pNext = findParentNext(parent))
+        setReqUrlBack()
         pNext.handle(err, request, response)
       else
         responseWith(500)
@@ -72,10 +81,15 @@ module.exports = ->
   app.listen = (port, callback)->
     http.createServer(app).listen(port, callback)
 
+  app.handle = app
   app.stack = []
 
   app.use = (path, middleware)->
     [path, middleware] = ['/', path] if !middleware
+
+    if typeof middleware.handle == 'function'
+      middleware.parentUrl = path
+
     layer = new Layer(path, middleware)
     if middleware.stack
       middleware.parent = app
