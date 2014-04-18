@@ -10,9 +10,9 @@ module.exports = ->
     obj3[k] = obj2[k] for k, v of obj2
     obj3
 
-  handler = (request, response)->
+  app = (request, response)->
     findParentNext = (parent)->
-      pIndex = parent.stack.indexOf(handler.wrap)
+      pIndex = parent.stack.indexOf(app.wrap)
       pNext = parent.stack[pIndex + 1]
 
     responseWith = (code)->
@@ -22,25 +22,25 @@ module.exports = ->
     index = -1
 
     findNearNormalLayer = (index)->
-      for l in handler.stack[index..-1]
+      for l in app.stack[index..-1]
         if l.handle.length < 4 && (match = l.match(request.url))
           request.params = mergeObjs(request.params, match.params)
           return l
 
     findNearErrorLayer = (index)->
-      for l in handler.stack[index..-1]
+      for l in app.stack[index..-1]
         if l.handle.length == 4 && (match = l.match(request.url))
           request.params = mergeObjs(request.params, match.params)
           return l
 
     normalEnd = ->
-      if (parent = handler.parent) && (pNext = findParentNext(parent))
+      if (parent = app.parent) && (pNext = findParentNext(parent))
         pNext.handle(request, response)
       else
         responseWith(404)
 
     errorEnd = (err)->
-      if (parent = handler.parent) && (pNext = findParentNext(parent))
+      if (parent = app.parent) && (pNext = findParentNext(parent))
         pNext.handle(err, request, response)
       else
         responseWith(500)
@@ -69,17 +69,17 @@ module.exports = ->
 
     next()
 
-  handler.listen = (port, callback)->
-    http.createServer(handler).listen(port, callback)
+  app.listen = (port, callback)->
+    http.createServer(app).listen(port, callback)
 
-  handler.stack = []
+  app.stack = []
 
-  handler.use = (path, middleware)->
+  app.use = (path, middleware)->
     [path, middleware] = ['/', path] if !middleware
     layer = new Layer(path, middleware)
     if middleware.stack
-      middleware.parent = handler
+      middleware.parent = app
       middleware.wrap = layer
-    handler.stack.push layer
+    app.stack.push layer
 
-  handler
+  app
