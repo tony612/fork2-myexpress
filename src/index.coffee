@@ -2,6 +2,14 @@ module.exports = ->
   http = require('http')
   Layer = require('./layer')
 
+  mergeObjs = (obj1, obj2)->
+    obj3 = {}
+    obj1 ||= {}
+    obj2 ||= {}
+    obj3[k] = obj1[k] for k, v of obj1
+    obj3[k] = obj2[k] for k, v of obj2
+    obj3
+
   handler = (request, response)->
     findParentNext = (parent)->
       pIndex = parent.stack.indexOf(handler.wrap)
@@ -15,11 +23,15 @@ module.exports = ->
 
     findNearNormalLayer = (index)->
       for l in handler.stack[index..-1]
-        return l if l.handle.length < 4 and l.match(request.url)
+        if l.handle.length < 4 && (match = l.match(request.url))
+          request.params = mergeObjs(request.params, match.params)
+          return l
 
     findNearErrorLayer = (index)->
       for l in handler.stack[index..-1]
-        return l if l.handle.length == 4 and l.match(request.url)
+        if l.handle.length == 4 && (match = l.match(request.url))
+          request.params = mergeObjs(request.params, match.params)
+          return l
 
     normalEnd = ->
       if (parent = handler.parent) && (pNext = findParentNext(parent))

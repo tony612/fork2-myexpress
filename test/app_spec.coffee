@@ -218,3 +218,21 @@ describe "app", ->
 
     it "GET /foo/b", (done)->
       request(@server).get('/foo/b').expect(200, "error handled /foo/b").end(done)
+
+  describe "set req.params", ->
+    it "returns the right value", (done)->
+      app = new express()
+      app.use "/foo/:a", (req,res,next)->
+        res.end(req.params.a)
+
+      server = http.createServer(app)
+      request(server).get('/foo/google').expect("google").end(done)
+
+    it "returns the default value", (done)->
+      app = new express()
+
+      app.use "/foo", (req,res,next)->
+        res.end("" + req.params.a)
+
+      server = http.createServer(app)
+      request(server).get('/foo').expect("undefined").end(done)
