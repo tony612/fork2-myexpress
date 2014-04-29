@@ -19,7 +19,8 @@ module.exports = ->
       pIndex = parent.stack.indexOf(app.wrap)
       pNext = parent.stack[pIndex + 1]
 
-    responseWith = (code)->
+    endResponse = (err)->
+      code = if err then 500 else 404
       response.statusCode = code
       response.end()
 
@@ -28,53 +29,37 @@ module.exports = ->
     setReqUrlBack = ->
       request.url = originUrl
 
-    findNearNormalLayer = (index)->
+    findNearLayer = (index, err)->
+      isMatch = (length)-> if !!err then length == 4 else length < 4
       for l in app.stack[index..-1]
-        if l.handle.length < 4 && (match = l.match(request.url))
+        if isMatch(l.handle.length) && (match = l.match(request.url))
           request.params = mergeObjs(request.params, match.params)
           return l
 
-    findNearErrorLayer = (index)->
-      for l in app.stack[index..-1]
-        if l.handle.length == 4 && (match = l.match(request.url))
-          request.params = mergeObjs(request.params, match.params)
-          return l
+    paramsWithErr = (err)->
+      args = Array.prototype.slice.call(arguments, 0)
+      args.shift() unless err
+      args
 
-    normalEnd = ->
-      if (parent = app.parent) && (pNext = findParentNext(parent))
-        setReqUrlBack()
-        pNext.handle(request, response)
-      else
-        responseWith(404)
+    end = (err)->
+      parent = app.parent
+      pNext = findParentNext(parent) if parent
+      return endResponse(err)  unless pNext
 
-    errorEnd = (err)->
-      if (parent = app.parent) && (pNext = findParentNext(parent))
-        setReqUrlBack()
-        pNext.handle(err, request, response)
-      else
-        responseWith(500)
+      setReqUrlBack()
 
-    normalNext = ->
-      if nextLayer = findNearNormalLayer(index)
-        try
-          nextLayer.handle(request, response, next)
-        catch e
-          errorNext(e)
-      else
-        normalEnd()
-
-    errorNext = (err)->
-      if nextLayer = findNearErrorLayer(index)
-        nextLayer.handle(err, request, response, next)
-      else
-        errorEnd(err)
+      pNext.handle.apply(null, paramsWithErr(err, request, response))
 
     next = (err)->
       index += 1
-      if err
-        errorNext(err)
-      else
-        normalNext()
+
+      nextLayer = findNearLayer(index, err)
+      return end(err) unless nextLayer
+
+      try
+        nextLayer.handle.apply(null, paramsWithErr(err, request, response, next))
+      catch e
+        next(e)
 
     next()
 
