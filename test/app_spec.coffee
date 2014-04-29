@@ -266,3 +266,30 @@ describe "app", ->
       app.use("/bar",barapp)
 
       request(app).get("/bar/").expect("/bar").end(done);
+
+  describe "#findNearNormalLayer", ->
+    beforeEach ->
+      @app = new express()
+
+      @app.use "/foo", (req, res, next)->
+        res.write('normal1 ');
+        next(new Error('Boom!'))
+
+      @app.use "/foo", (req, res, next)->
+        res.write('normal2 ');
+        next()
+
+      @app.use '/foo', (err, req, res, next)->
+        res.write('error1 ');
+        next()
+
+      @app.use '/foo', (err, req, res, next)->
+        res.write('error2 ');
+        next()
+
+      @app.use '/foo', (req, res, next)->
+        res.end('normal3')
+
+
+    it "the stack pass is ok", (done)->
+      request(@app).get('/foo').expect('normal1 error1 normal3').end(done);
